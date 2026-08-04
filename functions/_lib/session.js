@@ -5,6 +5,23 @@
 // or alter it, and HttpOnly keeps JavaScript from reading it. This is all the
 // session state we need: the bot API is the source of truth for everything else.
 
+// Fail early and clearly when a required Pages environment variable is missing,
+// instead of forwarding "undefined" to Discord or the bot and getting a cryptic
+// downstream error.
+export function requireEnv(env, names) {
+  const missing = names.filter((n) => !env[n]);
+  if (missing.length) {
+    return new Response(
+      JSON.stringify({
+        error: `Server not configured: missing ${missing.join(", ")}. ` +
+          `Set these in Cloudflare Pages → Settings → Environment variables, then redeploy.`,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+  return null;
+}
+
 const COOKIE_NAME = "mpb_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 

@@ -9,7 +9,7 @@
 // The browser never sees BOT_API_URL, DASHBOARD_API_SECRET, or the user's
 // Discord token. Only "identify"-level data and owned game metadata cross.
 
-import { currentUser } from "../_lib/session.js";
+import { currentUser, requireEnv } from "../_lib/session.js";
 import { callBot } from "../_lib/bot.js";
 
 const ALLOWED_METHODS = new Set(["GET", "PATCH"]);
@@ -18,6 +18,9 @@ export async function onRequest({ request, env, params }) {
   if (!ALLOWED_METHODS.has(request.method)) {
     return json({ error: "method not allowed" }, 405);
   }
+
+  const bad = requireEnv(env, ["SESSION_SECRET", "BOT_API_URL", "DASHBOARD_API_SECRET"]);
+  if (bad) return bad;
 
   const user = await currentUser(request, env);
   if (!user) return json({ error: "not authenticated" }, 401);

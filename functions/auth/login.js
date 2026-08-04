@@ -5,7 +5,12 @@
 // random state value is stored in a short-lived cookie and checked on callback
 // to prevent CSRF.
 
+import { requireEnv } from "../_lib/session.js";
+
 export async function onRequestGet({ request, env }) {
+  const bad = requireEnv(env, ["DISCORD_CLIENT_ID"]);
+  if (bad) return bad;
+
   const url = new URL(request.url);
   const redirectUri = `${url.origin}/auth/callback`;
   const state = crypto.randomUUID();

@@ -5,9 +5,12 @@
 // own signed session cookie. The Discord token itself is discarded — we only
 // needed the id.
 
-import { createSession, sessionCookie, readSessionCookie } from "../_lib/session.js";
+import { createSession, sessionCookie, readSessionCookie, requireEnv } from "../_lib/session.js";
 
 export async function onRequestGet({ request, env }) {
+  const bad = requireEnv(env, ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "SESSION_SECRET"]);
+  if (bad) return bad;
+
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
@@ -43,16 +46,14 @@ export async function onRequestGet({ request, env }) {
     env.SESSION_SECRET
   );
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: url.origin + "/",
-      "Set-Cookie": [
-        sessionCookie(session),
-        "oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0",
-      ],
-    },
-  });
+  // Two cookies must be sent as two separate Set-Cookie headers. An array in the
+  // object literal would be joined into one malformed value, so the session
+  // cookie would never be stored — which sends the user straight back to login.
+  const headers = new Headers({ Location: url.origin + "/" });
+  headers.append("Set-Cookie", sessionCookie(session));
+  headers.append("Set-Cookie", "oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0");
+
+  return new Response(null, { status: 302, headers });
 }
 
 function cookieValue(request, name) {
