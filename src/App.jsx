@@ -25,10 +25,18 @@ export default function App() {
   }
 
   if (auth.status === "out") {
+    // The callback redirects here with ?error=... on failure. Surface it, so a
+    // silent bounce becomes a labelled reason instead of an invisible loop.
+    const loginError = new URLSearchParams(window.location.search).get("error");
     return (
       <div className="center">
         <h1>mpopbot dashboard</h1>
         <p className="muted">Manage your companies, groups, albums and members.</p>
+        {loginError && (
+          <p style={{ color: "var(--danger)", fontWeight: 600 }}>
+            Login failed: {loginError}
+          </p>
+        )}
         <a href="/auth/login"><button>Log in with Discord</button></a>
       </div>
     );

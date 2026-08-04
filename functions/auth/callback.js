@@ -32,7 +32,16 @@ export async function onRequestGet({ request, env }) {
       redirect_uri: redirectUri,
     }),
   });
-  if (!tokenRes.ok) return redirect(url.origin + "/?error=token_exchange");
+  if (!tokenRes.ok) {
+    // Surface Discord's own reason (e.g. invalid_client = wrong client secret)
+    // so a failed exchange is diagnosable instead of a silent bounce to login.
+    let reason = "token_exchange";
+    try {
+      const detail = await tokenRes.json();
+      if (detail.error) reason = `token_exchange_${detail.error}`;
+    } catch {}
+    return redirect(`${url.origin}/?error=${encodeURIComponent(reason)}`);
+  }
 
   const token = await tokenRes.json();
   const userRes = await fetch("https://discord.com/api/users/@me", {
