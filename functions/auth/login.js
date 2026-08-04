@@ -21,7 +21,8 @@ export async function onRequestGet({ request, env }) {
   authorize.searchParams.set("response_type", "code");
   authorize.searchParams.set("scope", "identify");
   authorize.searchParams.set("state", state);
-  authorize.searchParams.set("prompt", "none");
+  // No prompt=none: a first-time user needs the consent screen, and prompt=none
+  // makes Discord return consent_required instead of showing it, blocking them.
 
   return new Response(null, {
     status: 302,
