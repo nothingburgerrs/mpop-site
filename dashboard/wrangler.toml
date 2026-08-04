@@ -1,0 +1,14 @@
+# Cloudflare Pages project config. The GitHub integration builds with
+# `npm run build` and serves dist/; functions/ is deployed automatically as
+# Pages Functions. Secrets are set in the Pages dashboard, not here.
+name = "mpopbot-dashboard"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-10-01"
+
+# R2 bucket for uploaded images. Create it once with:
+#   npx wrangler r2 bucket create mpopbot-media
+# then enable public access (or attach a custom domain) and set R2_PUBLIC_URL
+# to that public base. The binding name MEDIA is what functions/api/upload.js uses.
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "mpopbot-media"
