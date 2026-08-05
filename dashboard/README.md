@@ -10,6 +10,7 @@ editor** (pick from your device/gallery, position and zoom, save). It does not
 touch game logic, and the bot always remains the only process that runs the game
 — this is an external admin panel, never a bot runner.
 
+
 ## How it fits together
 
 ```
