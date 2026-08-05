@@ -1,17 +1,51 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import EditForm from "../components/EditForm.jsx";
 import ImageField from "../components/ImageField.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 const ALBUM_FIELDS = [
   { key: "title_track", label: "Title track" },
 ];
 
+// One editable song row: rename in place, keeping its streams/stats.
+function SongRow({ song, onRename }) {
+  const [value, setValue] = useState(song.name);
+  const [busy, setBusy] = useState(false);
+  const changed = value.trim() && value.trim() !== song.name;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await onRename(song.name, value.trim());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="song-row">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && changed && !busy) save(); }}
+      />
+      {song.is_title && <span className="title-tag">title track</span>}
+      <button className="secondary" onClick={save} disabled={!changed || busy}>
+        {busy ? "…" : "Rename"}
+      </button>
+    </div>
+  );
+}
+
 export default function AlbumEdit({ notify }) {
   const { name } = useParams();
+  const navigate = useNavigate();
   const [album, setAlbum] = useState(null);
   const [error, setError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(() => {
     api.album(name).then(setAlbum).catch((e) => setError(e.message));
@@ -22,11 +56,22 @@ export default function AlbumEdit({ notify }) {
   if (!album) return <p className="muted">Loading…</p>;
 
   const ro = album.readonly;
+  const songs = album.songs || [];
 
   const uploadAlbumImage = (field) => async (blob) => {
     const updated = await api.uploadImage({ kind: "album", name, field, blob });
     setAlbum(updated);
     notify({ message: "Image saved" });
+  };
+
+  const renameSong = async (oldName, newName) => {
+    try {
+      const updated = await api.renameSong(name, oldName, newName);
+      setAlbum(updated);
+      notify({ message: "Song renamed" });
+    } catch (e) {
+      notify({ message: e.message, error: true });
+    }
   };
 
   return (
@@ -68,6 +113,52 @@ export default function AlbumEdit({ notify }) {
           }
         }}
       />
+
+      <h3 style={{ marginTop: 32 }}>Songs ({songs.length})</h3>
+      {songs.length === 0 ? (
+        <p className="muted">No songs on this album. Add them with <code>/addsongs</code> in Discord.</p>
+      ) : (
+        <>
+          <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+            Rename a song without losing its streams. To change which song is the
+            title track, edit “Title track” above.
+          </p>
+          {songs.map((s) => (
+            <SongRow key={s.name} song={s} onRename={renameSong} />
+          ))}
+        </>
+      )}
+
+      {/* Destructive action. */}
+      <div className="danger-zone">
+        <h3>Danger zone</h3>
+        <p>Deleting an album is permanent and removes its stats.</p>
+        <div className="danger-row">
+          <div>
+            <strong>Delete album</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Permanently removes {album.name} from {album.group}.
+            </div>
+          </div>
+          <button className="danger" onClick={() => setConfirmDelete(true)}>Delete album</button>
+        </div>
+      </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete ${album.name}?`}
+          message={`This permanently deletes the album and its stats (streams, sales, wins). This cannot be undone.`}
+          confirmLabel="Delete forever"
+          confirmPhrase={album.name}
+          danger
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            await api.deleteAlbum(name);
+            notify({ message: `Deleted ${album.name}` });
+            navigate("/albums");
+          }}
+        />
+      )}
     </>
   );
 }

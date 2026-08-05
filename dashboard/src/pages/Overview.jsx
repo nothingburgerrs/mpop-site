@@ -43,7 +43,7 @@ export default function Overview() {
           <tbody>
             {data.companies.map((c) => (
               <tr key={c.name}>
-                <td>{c.name}</td>
+                <td><Link to={`/companies/${encodeURIComponent(c.name)}`}>{c.name}</Link></td>
                 <td>{c.funds.toLocaleString()}</td>
               </tr>
             ))}

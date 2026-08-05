@@ -8,6 +8,7 @@ import Groups from "./pages/Groups.jsx";
 import GroupEdit from "./pages/GroupEdit.jsx";
 import Albums from "./pages/Albums.jsx";
 import AlbumEdit from "./pages/AlbumEdit.jsx";
+import CompanyView from "./pages/CompanyView.jsx";
 
 export default function App() {
   const [auth, setAuth] = useState({ status: "loading" });
@@ -47,6 +48,7 @@ export default function App() {
       <Layout user={auth.user}>
         <Routes>
           <Route path="/" element={<Overview />} />
+          <Route path="/companies/:name" element={<CompanyView />} />
           <Route path="/groups" element={<Groups />} />
           <Route path="/groups/:name" element={<GroupEdit notify={notify} />} />
           <Route path="/albums" element={<Albums />} />

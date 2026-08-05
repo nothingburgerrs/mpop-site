@@ -34,6 +34,23 @@ export const api = {
       method: "PATCH", body: JSON.stringify(changes),
     }),
 
+  // Reversible: mark a group inactive (or active again). Not a deletion.
+  disbandGroup: (name, disbanded) =>
+    request(`/api/groups/${encodeURIComponent(name)}/disband`, {
+      method: "POST", body: JSON.stringify({ disbanded }),
+    }),
+  // Permanent: removes the group AND all its albums.
+  deleteGroup: (name) =>
+    request(`/api/groups/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  // Permanent: removes a single album.
+  deleteAlbum: (name) =>
+    request(`/api/albums/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  // Rename one song in an album's tracklist (keeps its streams/stats).
+  renameSong: (albumName, oldName, newName) =>
+    request(`/api/albums/${encodeURIComponent(albumName)}/songs/rename`, {
+      method: "POST", body: JSON.stringify({ old: oldName, new: newName }),
+    }),
+
   // Upload a cropped image blob for one field. The server stores it and points
   // the field at it (enforcing ownership), returning the refreshed resource.
   uploadImage: async ({ kind, name, field, index, blob }) => {

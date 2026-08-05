@@ -79,6 +79,23 @@ button {
 }
 button:disabled { opacity: .5; cursor: default; }
 button.secondary { background: transparent; color: var(--text); border-color: var(--border); }
+button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+button.danger:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* Danger zone — destructive actions kept visually separate at the bottom. */
+.danger-zone {
+  margin-top: 40px; border: 1px solid var(--danger); border-radius: var(--radius);
+  padding: 16px 18px; background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+.danger-zone h3 { margin: 0 0 4px; color: var(--danger); font-size: 15px; }
+.danger-zone p { margin: 0 0 14px; font-size: 13px; color: var(--text-dim); }
+.danger-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.danger-row + .danger-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* Song tracklist rows */
+.song-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.song-row input[type="text"] { flex: 1; }
+.song-row .title-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--accent-dim); color: var(--accent); font-weight: 600; white-space: nowrap; }
 
 .readonly-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; margin-bottom: 24px; }
 .readonly-grid .k { font-size: 12px; color: var(--text-dim); }

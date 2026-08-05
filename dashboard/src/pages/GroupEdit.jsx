@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import EditForm from "../components/EditForm.jsx";
 import ImageField from "../components/ImageField.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 // Text fields go in EditForm (batched); image fields upload immediately.
 const GROUP_FIELDS = [
@@ -19,8 +20,10 @@ const MEMBER_FIELDS = [
 
 export default function GroupEdit({ notify }) {
   const { name } = useParams();
+  const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [error, setError] = useState(null);
+  const [dialog, setDialog] = useState(null); // "disband" | "delete" | null
 
   const load = useCallback(() => {
     api.group(name).then(setGroup).catch((e) => setError(e.message));
@@ -31,6 +34,7 @@ export default function GroupEdit({ notify }) {
   if (!group) return <p className="muted">Loading…</p>;
 
   const ro = group.readonly;
+  const disbanded = ro.is_disbanded;
 
   const uploadGroupImage = (field) => async (blob) => {
     const updated = await api.uploadImage({ kind: "group", name, field, blob });
@@ -41,7 +45,7 @@ export default function GroupEdit({ notify }) {
   return (
     <>
       <p className="muted"><Link to="/groups">← Groups</Link></p>
-      <h2>{group.name}</h2>
+      <h2>{group.name}{disbanded && <span className="badge" style={{ marginLeft: 10 }}>disbanded</span>}</h2>
       <p className="subtitle">Managed by {group.company}</p>
 
       <div className="readonly-grid">
@@ -111,6 +115,69 @@ export default function GroupEdit({ notify }) {
             />
           </div>
         ))
+      )}
+
+      {/* Destructive actions, kept apart at the bottom. */}
+      <div className="danger-zone">
+        <h3>Danger zone</h3>
+        <p>Disbanding is reversible. Deleting is permanent.</p>
+
+        <div className="danger-row">
+          <div>
+            <strong>{disbanded ? "Reactivate group" : "Disband group"}</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              {disbanded
+                ? "Bring the group back to active status."
+                : "Mark inactive — the group stops releasing new music. Can be undone."}
+            </div>
+          </div>
+          <button className="secondary" onClick={() => setDialog("disband")}>
+            {disbanded ? "Reactivate" : "Disband"}
+          </button>
+        </div>
+
+        <div className="danger-row">
+          <div>
+            <strong>Delete group</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Permanently removes {group.name} and all {group.albums.length} of its albums.
+            </div>
+          </div>
+          <button className="danger" onClick={() => setDialog("delete")}>Delete group</button>
+        </div>
+      </div>
+
+      {dialog === "disband" && (
+        <ConfirmDialog
+          title={disbanded ? `Reactivate ${group.name}?` : `Disband ${group.name}?`}
+          message={disbanded
+            ? "The group will be active again and can release music."
+            : "The group will be marked inactive. You can reactivate it any time."}
+          confirmLabel={disbanded ? "Reactivate" : "Disband"}
+          onCancel={() => setDialog(null)}
+          onConfirm={async () => {
+            const updated = await api.disbandGroup(name, !disbanded);
+            setGroup(updated);
+            setDialog(null);
+            notify({ message: disbanded ? "Group reactivated" : "Group disbanded" });
+          }}
+        />
+      )}
+
+      {dialog === "delete" && (
+        <ConfirmDialog
+          title={`Delete ${group.name}?`}
+          message={`This permanently deletes the group and all ${group.albums.length} of its albums, including their stats. This cannot be undone.`}
+          confirmLabel="Delete forever"
+          confirmPhrase={group.name}
+          danger
+          onCancel={() => setDialog(null)}
+          onConfirm={async () => {
+            await api.deleteGroup(name);
+            notify({ message: `Deleted ${group.name}` });
+            navigate("/groups");
+          }}
+        />
       )}
     </>
   );
