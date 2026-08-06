@@ -9,6 +9,8 @@ import GroupEdit from "./pages/GroupEdit.jsx";
 import Albums from "./pages/Albums.jsx";
 import AlbumEdit from "./pages/AlbumEdit.jsx";
 import CompanyView from "./pages/CompanyView.jsx";
+import Videos from "./pages/Videos.jsx";
+import VideoEdit from "./pages/VideoEdit.jsx";
 
 export default function App() {
   const [auth, setAuth] = useState({ status: "loading" });
@@ -53,6 +55,8 @@ export default function App() {
           <Route path="/groups/:name" element={<GroupEdit notify={notify} />} />
           <Route path="/albums" element={<Albums />} />
           <Route path="/albums/:name" element={<AlbumEdit notify={notify} />} />
+          <Route path="/videos" element={<Videos notify={notify} />} />
+          <Route path="/videos/:id" element={<VideoEdit notify={notify} />} />
         </Routes>
       </Layout>
       <Toast toast={toast} onClear={() => setToast(null)} />

@@ -51,6 +51,17 @@ export const api = {
       method: "POST", body: JSON.stringify({ old: oldName, new: newName }),
     }),
 
+  // --- Videos (the YouTube section) ---
+  listVideos: () => request("/api/videos"),
+  createVideo: (fields) =>
+    request("/api/videos", { method: "POST", body: JSON.stringify(fields) }),
+  saveVideo: (id, changes) =>
+    request(`/api/videos/${id}`, { method: "PATCH", body: JSON.stringify(changes) }),
+  deleteVideo: (id) => request(`/api/videos/${id}`, { method: "DELETE" }),
+  // Upload a cropped image (thumbnail or channel logo) for a video, via R2.
+  uploadVideoImage: ({ id, field, blob }) =>
+    api.uploadImage({ kind: "video", name: String(id), field, blob }),
+
   // Upload a cropped image blob for one field. The server stores it and points
   // the field at it (enforcing ownership), returning the refreshed resource.
   uploadImage: async ({ kind, name, field, index, blob }) => {

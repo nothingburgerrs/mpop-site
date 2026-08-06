@@ -10,6 +10,7 @@ export default function Layout({ user, children }) {
           <NavLink to="/" end>Overview</NavLink>
           <NavLink to="/groups">Groups</NavLink>
           <NavLink to="/albums">Albums</NavLink>
+          <NavLink to="/videos">Videos</NavLink>
         </nav>
         <div className="user">
           {user?.username && <div>Signed in as {user.username}</div>}

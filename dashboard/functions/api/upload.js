@@ -14,6 +14,7 @@ const IMAGE_FIELDS = {
   group: new Set(["profile_picture", "banner_url"]),
   album: new Set(["image_url", "era_image_url"]),
   member: new Set(["image_url"]),
+  video: new Set(["thumbnail_url", "channel_logo"]),
 };
 
 const ALLOWED_TYPES = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };

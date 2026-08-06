@@ -66,12 +66,12 @@ tbody tr:hover { background: var(--bg); }
 .form-row { margin-bottom: 16px; }
 .form-row label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
 .form-row .hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-input[type="text"], textarea {
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
   width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
   background: var(--bg); color: var(--text); font: inherit;
 }
 textarea { min-height: 72px; resize: vertical; }
-input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
 
 button {
   font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 6px;
