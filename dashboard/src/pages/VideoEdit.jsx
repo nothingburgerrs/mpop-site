@@ -24,6 +24,7 @@ export default function VideoEdit({ notify }) {
         setForm({
           title: v.title, channel: v.channel, type: v.type,
           views: v.views, likes: v.likes, dislikes: v.dislikes, date: v.date || "",
+          group: v.group || "", album: v.album || "",
         });
       })
       .catch((e) => setError(e.message));
@@ -47,6 +48,7 @@ export default function VideoEdit({ notify }) {
       const updated = await api.saveVideo(video.id, {
         title: form.title, channel: form.channel, type: form.type,
         views: form.views, likes: form.likes, dislikes: form.dislikes, date: form.date,
+        group: form.group, album: form.album,
       });
       setVideo(updated);
       setForm((f) => ({ ...f, ...updated }));
@@ -114,6 +116,18 @@ export default function VideoEdit({ notify }) {
         <label>Upload date</label>
         <input type="date" value={form.date || ""} onChange={(e) => set("date", e.target.value)} />
         <div className="hint">Used for the “X ago” shown under the video.</div>
+      </div>
+
+      <div className="form-row">
+        <label>Link to a game MV (optional)</label>
+        <div className="hint" style={{ marginTop: 0, marginBottom: 6 }}>
+          Fill both to make <code>/youtube {form.group || "group"} {form.album || "album"}</code> render
+          <strong> this</strong> video — with the album’s real views.
+        </div>
+        <input type="text" value={form.group} onChange={(e) => set("group", e.target.value)}
+          placeholder="Group (e.g. ROM.COM)" style={{ marginBottom: 8 }} />
+        <input type="text" value={form.album} onChange={(e) => set("album", e.target.value)}
+          placeholder="Album (e.g. Girl Of The Year)" />
       </div>
 
       <button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
