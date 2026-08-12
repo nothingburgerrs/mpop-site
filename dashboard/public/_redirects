@@ -1,3 +1,0 @@
-# SPA fallback: client-side routes (e.g. /groups/WINGS) serve the app shell.
-# Pages Functions handle /api/* and /auth/* first, so this only catches app routes.
-/*    /index.html   200
