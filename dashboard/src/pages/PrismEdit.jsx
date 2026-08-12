@@ -18,7 +18,7 @@ function GridPreview({ slots, special, color, gridSize }) {
         <div key={i} className={"prism-cell " + (POS[i] || "")} style={c && c.art_url ? { borderColor: color } : undefined}>
           {c && c.art_url
             ? <img src={c.art_url} alt="" />
-            : <span className="prism-num">?</span>}
+            : <span className="prism-num">{101 + i}</span>}
         </div>
       ))}
       <div className="prism-cell prism-center pos-c" style={{ borderColor: color }}>
