@@ -6,20 +6,19 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 // Prism card art is a tall portrait card, like a real photocard (~2:3).
 const CARD_ASPECT = 2 / 3;
-const CLASS_SUFFIX = { First: "", Special: "S", Zero: "Z", Premier: "P" };
 
 // A preview of one member's grid: the card designs in a plus around the center
 // Special Prism (top / left / right / bottom), echoing the in-Discord /grid
-// image. Empty slots show their collection number.
+// image. Empty slots show a "?" (collectors pull them to fill).
 const POS = ["pos-n", "pos-w", "pos-e", "pos-s"];
 function GridPreview({ slots, special, color, gridSize }) {
   return (
     <div className="prism-grid">
       {slots.slice(0, gridSize).map((c, i) => (
-        <div key={i} className={"prism-cell " + (POS[i] || "")} style={c ? { borderColor: color } : undefined}>
+        <div key={i} className={"prism-cell " + (POS[i] || "")} style={c && c.art_url ? { borderColor: color } : undefined}>
           {c && c.art_url
             ? <img src={c.art_url} alt="" />
-            : <span className="prism-num">{101 + i}{c ? CLASS_SUFFIX[c.class] || "" : ""}</span>}
+            : <span className="prism-num">?</span>}
         </div>
       ))}
       <div className="prism-cell prism-center pos-c" style={{ borderColor: color }}>
@@ -29,7 +28,7 @@ function GridPreview({ slots, special, color, gridSize }) {
   );
 }
 
-function MemberGrid({ group, version, member, classes, gridSize, onVersion, notify }) {
+function MemberGrid({ group, version, member, gridSize, onVersion, notify }) {
   const mentry = (version.members && version.members[member]) || {};
   const cards = mentry.cards || [];
   const bySlot = {};
@@ -45,15 +44,6 @@ function MemberGrid({ group, version, member, classes, gridSize, onVersion, noti
     onVersion(updated);
     notify({ message: "Special Prism saved" });
   };
-  const changeClass = (slot) => async (e) => {
-    try {
-      const updated = await api.saveCardClass(group, version.id, member, slot, e.target.value);
-      onVersion(updated);
-    } catch (err) {
-      notify({ message: err.message, error: true });
-    }
-  };
-
   const slotArr = Array.from({ length: gridSize }, (_, i) => bySlot[i + 1] || null);
   const filled = slotArr.filter((c) => c && c.art_url).length;
 
@@ -75,10 +65,6 @@ function MemberGrid({ group, version, member, classes, gridSize, onVersion, noti
                   label="" aspect={CARD_ASPECT} value={c ? c.art_url : ""}
                   hint="" onUpload={uploadCard(slot)}
                 />
-                <select value={(c && c.class) || "First"} onChange={changeClass(slot)}
-                  className="prism-class-select" title="Rarity class">
-                  {classes.map((cl) => <option key={cl} value={cl}>{cl}</option>)}
-                </select>
               </div>
             );
           })}
@@ -191,7 +177,7 @@ export default function PrismEdit({ notify }) {
 
           {data.members.map((m) => (
             <MemberGrid key={m} group={name} version={version} member={m}
-              classes={data.classes} gridSize={data.grid_size}
+              gridSize={data.grid_size}
               onVersion={replaceVersion} notify={notify} />
           ))}
         </>

@@ -53,7 +53,12 @@ export default function AlbumEdit({ notify }) {
   }, [name]);
   useEffect(load, [load]);
 
-  if (error) return <p className="muted">{error}</p>;
+  if (error) return (
+    <p className="muted">
+      <Link to="/albums">← Albums</Link><br /><br />
+      {error} — requested album: <code>{name}</code>
+    </p>
+  );
   if (!album) return <p className="muted">Loading…</p>;
 
   const ro = album.readonly;
