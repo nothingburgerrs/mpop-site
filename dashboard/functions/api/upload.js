@@ -15,6 +15,9 @@ const IMAGE_FIELDS = {
   album: new Set(["image_url", "era_image_url"]),
   member: new Set(["image_url", "card_url", "special_url"]),
   video: new Set(["thumbnail_url", "channel_logo"]),
+  // Prism version art: a card design (art_url) or a member's center special.
+  prismcard: new Set(["art_url"]),
+  prismspecial: new Set(["special_url"]),
 };
 
 const ALLOWED_TYPES = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
@@ -50,15 +53,28 @@ export async function onRequestPost({ request, env }) {
   const publicUrl = `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
 
   // Persist through the bot, which enforces ownership. Roll back on failure.
+  const enc = encodeURIComponent;
   let botPath;
   if (kind === "member") {
     if (index === null || index === "") {
       await env.MEDIA.delete(key);
       return json({ error: "member index required" }, 400);
     }
-    botPath = `/api/groups/${encodeURIComponent(name)}/members/${encodeURIComponent(index)}`;
+    botPath = `/api/groups/${enc(name)}/members/${enc(index)}`;
+  } else if (kind === "prismcard" || kind === "prismspecial") {
+    // name = group; these need version + member (+ slot for a card).
+    const version = url.searchParams.get("version");
+    const member = url.searchParams.get("member");
+    const slot = url.searchParams.get("slot");
+    if (!version || !member || (kind === "prismcard" && (slot === null || slot === ""))) {
+      await env.MEDIA.delete(key);
+      return json({ error: "version, member and slot are required" }, 400);
+    }
+    botPath = kind === "prismcard"
+      ? `/api/groups/${enc(name)}/prisms/${enc(version)}/cards/${enc(member)}/${enc(slot)}`
+      : `/api/groups/${enc(name)}/prisms/${enc(version)}/special/${enc(member)}`;
   } else {
-    botPath = `/api/${kind}s/${encodeURIComponent(name)}`;
+    botPath = `/api/${kind}s/${enc(name)}`;
   }
 
   let botRes;

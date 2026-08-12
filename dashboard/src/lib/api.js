@@ -19,6 +19,9 @@ async function request(path, options = {}) {
 export const api = {
   me: () => request("/auth/me"),
   owned: () => request("/api/me"),
+  // Public browsing (any signed-in user; not ownership-scoped).
+  publicGroups: () => request("/api/public/groups"),
+  publicGroup: (name) => request(`/api/public/groups/${encodeURIComponent(name)}`),
   group: (name) => request(`/api/groups/${encodeURIComponent(name)}`),
   saveGroup: (name, changes) =>
     request(`/api/groups/${encodeURIComponent(name)}`, {
@@ -66,11 +69,40 @@ export const api = {
   uploadMemberImage: ({ group, index, field, blob }) =>
     api.uploadImage({ kind: "member", name: group, field, index, blob }),
 
+  // --- Prisms (Objekt-style versions on a group) ---
+  listPrisms: (group) => request(`/api/groups/${encodeURIComponent(group)}/prisms`),
+  createVersion: (group, fields) =>
+    request(`/api/groups/${encodeURIComponent(group)}/prisms`, {
+      method: "POST", body: JSON.stringify(fields),
+    }),
+  saveVersion: (group, vid, changes) =>
+    request(`/api/groups/${encodeURIComponent(group)}/prisms/${vid}`, {
+      method: "PATCH", body: JSON.stringify(changes),
+    }),
+  deleteVersion: (group, vid) =>
+    request(`/api/groups/${encodeURIComponent(group)}/prisms/${vid}`, { method: "DELETE" }),
+  saveCardClass: (group, vid, member, slot, cls) =>
+    request(`/api/groups/${encodeURIComponent(group)}/prisms/${vid}/cards/${encodeURIComponent(member)}/${slot}`, {
+      method: "PATCH", body: JSON.stringify({ class: cls }),
+    }),
+  // Returns the refreshed version (the bot's set_prism_card / set_prism_special response).
+  uploadPrismCard: ({ group, vid, member, slot, blob }) =>
+    api.uploadImage({ kind: "prismcard", name: group, field: "art_url", blob,
+      extra: { version: vid, member, slot } }),
+  uploadPrismSpecial: ({ group, vid, member, blob }) =>
+    api.uploadImage({ kind: "prismspecial", name: group, field: "special_url", blob,
+      extra: { version: vid, member } }),
+
   // Upload a cropped image blob for one field. The server stores it and points
   // the field at it (enforcing ownership), returning the refreshed resource.
-  uploadImage: async ({ kind, name, field, index, blob }) => {
+  uploadImage: async ({ kind, name, field, index, extra, blob }) => {
     const params = new URLSearchParams({ kind, name, field });
     if (index !== undefined && index !== null) params.set("index", String(index));
+    if (extra) {
+      for (const [k, v] of Object.entries(extra)) {
+        if (v !== undefined && v !== null) params.set(k, String(v));
+      }
+    }
     const res = await fetch(`/api/upload?${params.toString()}`, {
       method: "POST",
       credentials: "same-origin",

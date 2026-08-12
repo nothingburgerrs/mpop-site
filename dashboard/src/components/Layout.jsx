@@ -8,6 +8,7 @@ export default function Layout({ user, children }) {
         <h1>mpopbot</h1>
         <nav className="nav">
           <NavLink to="/" end>Overview</NavLink>
+          <NavLink to="/explore">Explore</NavLink>
           <NavLink to="/groups">Groups</NavLink>
           <NavLink to="/albums">Albums</NavLink>
           <NavLink to="/videos">Videos</NavLink>

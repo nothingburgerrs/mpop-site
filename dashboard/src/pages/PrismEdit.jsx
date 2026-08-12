@@ -2,98 +2,215 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import ImageField from "../components/ImageField.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 // Prism card art is a tall portrait card, like a real photocard (~2:3).
 const CARD_ASPECT = 2 / 3;
-// Mirrors GRID_SIZE in the bot: how many of the SAME member complete their grid.
-const GRID_SIZE = 5;
+const CLASS_SUFFIX = { First: "", Special: "S", Zero: "Z", Premier: "P" };
 
-// A preview of a member's completed grid: the card art tiled around the center
-// Special Prism — the same shape collectors see in Discord. Empty slots show
-// their card number, exactly like an unpulled grid.
-function GridPreview({ card, special }) {
-  const slots = [101, 102, 103, 104, /* center */ 105, 106, 107, 108];
-  const cells = [];
-  for (let pos = 0; pos < 9; pos++) {
-    if (pos === 4) {
-      cells.push(
-        <div key="center" className="prism-cell prism-center">
-          {special
-            ? <img src={special} alt="Special Prism" />
-            : <span className="prism-q">?</span>}
+// A preview of one member's grid: the card designs in a plus around the center
+// Special Prism (top / left / right / bottom), echoing the in-Discord /grid
+// image. Empty slots show their collection number.
+const POS = ["pos-n", "pos-w", "pos-e", "pos-s"];
+function GridPreview({ slots, special, color, gridSize }) {
+  return (
+    <div className="prism-grid">
+      {slots.slice(0, gridSize).map((c, i) => (
+        <div key={i} className={"prism-cell " + (POS[i] || "")} style={c ? { borderColor: color } : undefined}>
+          {c && c.art_url
+            ? <img src={c.art_url} alt="" />
+            : <span className="prism-num">{101 + i}{c ? CLASS_SUFFIX[c.class] || "" : ""}</span>}
         </div>
-      );
-    } else {
-      const n = slots[pos < 4 ? pos : pos - 1];
-      cells.push(
-        <div key={pos} className="prism-cell">
-          {card
-            ? <img src={card} alt="" />
-            : <span className="prism-num">{n}</span>}
-        </div>
-      );
+      ))}
+      <div className="prism-cell prism-center pos-c" style={{ borderColor: color }}>
+        {special ? <img src={special} alt="Special Prism" /> : <span className="prism-q">?</span>}
+      </div>
+    </div>
+  );
+}
+
+function MemberGrid({ group, version, member, classes, gridSize, onVersion, notify }) {
+  const mentry = (version.members && version.members[member]) || {};
+  const cards = mentry.cards || [];
+  const bySlot = {};
+  for (const c of cards) bySlot[c.slot] = c;
+
+  const uploadCard = (slot) => async (blob) => {
+    const updated = await api.uploadPrismCard({ group, vid: version.id, member, slot, blob });
+    onVersion(updated);
+    notify({ message: `Slot ${slot} art saved` });
+  };
+  const uploadSpecial = async (blob) => {
+    const updated = await api.uploadPrismSpecial({ group, vid: version.id, member, blob });
+    onVersion(updated);
+    notify({ message: "Special Prism saved" });
+  };
+  const changeClass = (slot) => async (e) => {
+    try {
+      const updated = await api.saveCardClass(group, version.id, member, slot, e.target.value);
+      onVersion(updated);
+    } catch (err) {
+      notify({ message: err.message, error: true });
     }
-  }
-  return <div className="prism-grid">{cells}</div>;
+  };
+
+  const slotArr = Array.from({ length: gridSize }, (_, i) => bySlot[i + 1] || null);
+  const filled = slotArr.filter((c) => c && c.art_url).length;
+
+  return (
+    <details className="card" style={{ marginBottom: 14 }}>
+      <summary className="prism-member-summary">
+        <strong>{member}</strong>
+        <span className="muted" style={{ fontSize: 13 }}>{filled}/{gridSize} cards{mentry.special_url ? " · special ✓" : ""}</span>
+      </summary>
+
+      <div className="prism-editor" style={{ marginTop: 14 }}>
+        <div className="prism-fields">
+          {slotArr.map((c, i) => {
+            const slot = i + 1;
+            return (
+              <div key={slot} className="prism-slot-row">
+                <div className="prism-slot-label">#{slot}</div>
+                <ImageField
+                  label="" aspect={CARD_ASPECT} value={c ? c.art_url : ""}
+                  hint="" onUpload={uploadCard(slot)}
+                />
+                <select value={(c && c.class) || "First"} onChange={changeClass(slot)}
+                  className="prism-class-select" title="Rarity class">
+                  {classes.map((cl) => <option key={cl} value={cl}>{cl}</option>)}
+                </select>
+              </div>
+            );
+          })}
+          <div className="prism-slot-row" style={{ marginTop: 6 }}>
+            <div className="prism-slot-label">★</div>
+            <ImageField
+              label="" aspect={CARD_ASPECT} value={mentry.special_url || ""}
+              hint="Center Special Prism — revealed when a collector completes this member's grid."
+              onUpload={uploadSpecial}
+            />
+          </div>
+        </div>
+        <div className="prism-preview">
+          <div className="hint" style={{ marginBottom: 6 }}>Grid preview</div>
+          <GridPreview slots={slotArr} special={mentry.special_url} color={version.color} gridSize={gridSize} />
+        </div>
+      </div>
+    </details>
+  );
 }
 
 export default function PrismEdit({ notify }) {
   const { name } = useParams();
-  const [group, setGroup] = useState(null);
+  const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const load = useCallback(() => {
-    api.group(name).then(setGroup).catch((e) => setError(e.message));
+    api.listPrisms(name)
+      .then((d) => {
+        setData(d);
+        setSelectedId((cur) => cur ?? (d.versions[0]?.id ?? null));
+      })
+      .catch((e) => setError(e.message));
   }, [name]);
   useEffect(load, [load]);
 
   if (error) return <p className="muted">{error}</p>;
-  if (!group) return <p className="muted">Loading…</p>;
+  if (!data) return <p className="muted">Loading…</p>;
 
-  const upload = (index, field) => async (blob) => {
-    const updated = await api.uploadMemberImage({ group: name, index, field, blob });
-    setGroup(updated);
-    notify({ message: "Prism art saved" });
+  const replaceVersion = (v) =>
+    setData((d) => ({ ...d, versions: d.versions.map((x) => (x.id === v.id ? v : x)) }));
+
+  const version = data.versions.find((v) => v.id === selectedId) || null;
+
+  const createNew = async () => {
+    setCreating(true);
+    try {
+      const v = await api.createVersion(name, { name: "New version", color: "#8b5cf6" });
+      setData((d) => ({ ...d, versions: [...d.versions, v] }));
+      setSelectedId(v.id);
+    } catch (e) {
+      notify({ message: e.message, error: true });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const saveMeta = async (changes) => {
+    try {
+      const v = await api.saveVersion(name, version.id, changes);
+      replaceVersion(v);
+    } catch (e) {
+      notify({ message: e.message, error: true });
+    }
   };
 
   return (
     <>
       <p className="muted"><Link to="/prisms">← Prisms</Link></p>
-      <h2>{group.name} — Prisms</h2>
+      <h2>{data.group} — Prisms</h2>
       <p className="subtitle">
-        Give each member custom card art. Collectors pull these with <code>/pull</code>;
-        collecting <strong>{GRID_SIZE}</strong> of the same member completes their grid
-        and reveals the Special Prism in the center.
+        Build <strong>versions</strong> (like Objekt seasons). Each member gets a{" "}
+        {data.grid_size}-card grid; collectors who pull all {data.grid_size} of a member's
+        cards reveal the center Special Prism.
       </p>
 
-      {group.members.length === 0 ? (
+      <div className="prism-version-bar">
+        {data.versions.map((v) => (
+          <button key={v.id}
+            className={"prism-version-pill" + (v.id === selectedId ? " active" : "")}
+            onClick={() => setSelectedId(v.id)}>
+            <span className="prism-dot" style={{ background: v.color }} />
+            {v.name}
+          </button>
+        ))}
+        <button className="secondary" onClick={createNew} disabled={creating}>
+          {creating ? "Creating…" : "+ New version"}
+        </button>
+      </div>
+
+      {data.members.length === 0 ? (
         <p className="muted">This group has no members yet.</p>
+      ) : !version ? (
+        <p className="muted">Create a version to start adding card art.</p>
       ) : (
-        group.members.map((m) => (
-          <div className="card" key={m.index} style={{ marginBottom: 20 }}>
-            <div className="title" style={{ marginBottom: 12 }}>
-              {m.name || `Member ${m.index + 1}`}
-            </div>
-            <div className="prism-editor">
-              <div className="prism-fields">
-                <ImageField
-                  label="Card art" aspect={CARD_ASPECT} value={m.card_url}
-                  hint="The Prism shown on /pull. Portrait card (2:3). Falls back to the member's photo if unset."
-                  onUpload={upload(m.index, "card_url")}
-                />
-                <ImageField
-                  label="Special Prism (center)" aspect={CARD_ASPECT} value={m.special_url}
-                  hint="Revealed in the center once a collector completes this member's grid."
-                  onUpload={upload(m.index, "special_url")}
-                />
-              </div>
-              <div className="prism-preview">
-                <div className="hint" style={{ marginBottom: 6 }}>Completed-grid preview</div>
-                <GridPreview card={m.card_url || m.image_url} special={m.special_url} />
-              </div>
-            </div>
+        <>
+          <div className="prism-version-head">
+            <input type="text" defaultValue={version.name} key={`n-${version.id}`}
+              onBlur={(e) => e.target.value.trim() && e.target.value !== version.name && saveMeta({ name: e.target.value.trim() })}
+              className="prism-version-name" />
+            <label className="prism-color" title="Accent color">
+              <input type="color" value={version.color}
+                onChange={(e) => saveMeta({ color: e.target.value })} />
+            </label>
+            <button className="danger" onClick={() => setConfirmDel(true)}>Delete version</button>
           </div>
-        ))
+
+          {data.members.map((m) => (
+            <MemberGrid key={m} group={name} version={version} member={m}
+              classes={data.classes} gridSize={data.grid_size}
+              onVersion={replaceVersion} notify={notify} />
+          ))}
+        </>
+      )}
+
+      {confirmDel && version && (
+        <ConfirmDialog
+          title={`Delete version “${version.name}”?`}
+          message="This removes the version and all its card art for every member. Collectors keep any cards they already pulled. This cannot be undone."
+          confirmLabel="Delete version" danger
+          onCancel={() => setConfirmDel(false)}
+          onConfirm={async () => {
+            await api.deleteVersion(name, version.id);
+            setData((d) => ({ ...d, versions: d.versions.filter((x) => x.id !== version.id) }));
+            setSelectedId(null);
+            setConfirmDel(false);
+            notify({ message: "Version deleted" });
+          }}
+        />
       )}
     </>
   );

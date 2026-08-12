@@ -13,6 +13,8 @@ import Videos from "./pages/Videos.jsx";
 import VideoEdit from "./pages/VideoEdit.jsx";
 import Prisms from "./pages/Prisms.jsx";
 import PrismEdit from "./pages/PrismEdit.jsx";
+import Explore from "./pages/Explore.jsx";
+import PublicGroup from "./pages/PublicGroup.jsx";
 
 export default function App() {
   const [auth, setAuth] = useState({ status: "loading" });
@@ -61,6 +63,8 @@ export default function App() {
           <Route path="/videos/:id" element={<VideoEdit notify={notify} />} />
           <Route path="/prisms" element={<Prisms />} />
           <Route path="/prisms/:name" element={<PrismEdit notify={notify} />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/explore/:name" element={<PublicGroup />} />
         </Routes>
       </Layout>
       <Toast toast={toast} onClear={() => setToast(null)} />
