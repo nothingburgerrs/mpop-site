@@ -36,7 +36,7 @@ export default function EditForm({ fields, initial, onSave }) {
             <textarea id={f.key} value={values[f.key] || ""}
               onChange={(e) => update(f.key, e.target.value)} />
           ) : (
-            <input id={f.key} type="text" value={values[f.key] || ""}
+            <input id={f.key} type={f.type || "text"} value={values[f.key] || ""}
               placeholder={f.placeholder || ""}
               onChange={(e) => update(f.key, e.target.value)} />
           )}

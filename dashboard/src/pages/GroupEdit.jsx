@@ -10,6 +10,7 @@ const GROUP_FIELDS = [
   { key: "korean_name", label: "Korean name" },
   { key: "fandom_name", label: "Fandom name" },
   { key: "fandom_color", label: "Fandom color", placeholder: "#ff77aa", hint: "Hex color used for the fandom." },
+  { key: "debut_date", label: "Debut date", type: "date", hint: "The group's official debut date." },
   { key: "description", label: "Description", multiline: true },
 ];
 

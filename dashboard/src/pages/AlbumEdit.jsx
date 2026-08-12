@@ -7,6 +7,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 const ALBUM_FIELDS = [
   { key: "title_track", label: "Title track" },
+  { key: "release_date", label: "Release date", type: "date", hint: "When the album released. Affects charts, age decay, and 'first 24h'." },
 ];
 
 // One editable song row: rename in place, keeping its streams/stats.
