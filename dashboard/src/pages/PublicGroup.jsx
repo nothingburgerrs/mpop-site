@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api.js";
+import SmartImg from "../components/SmartImg.jsx";
 
 const fmt = (n) => (n || 0).toLocaleString();
 
@@ -26,12 +27,11 @@ export default function PublicGroup() {
       <p className="muted"><Link to="/explore">← Explore</Link></p>
 
       <div className="hero" style={{ "--fc": accent }}>
-        {g.banner_url
-          ? <img className="hero-bg" src={g.banner_url} alt="" />
-          : <div className="hero-bg hero-bg-fallback" />}
+        <SmartImg className="hero-bg" src={g.banner_url}
+          fallback={<div className="hero-bg hero-bg-fallback" />} />
         <div className="hero-scrim" />
         <div className="hero-content">
-          {g.profile_picture && <img className="hero-avatar" src={g.profile_picture} alt="" />}
+          <SmartImg className="hero-avatar" src={g.profile_picture} />
           <div className="hero-text">
             <div className="hero-badges">
               <span className={"tier-badge tier-" + (g.tier || "NUGU").toLowerCase()}>{g.tier}</span>
@@ -63,7 +63,8 @@ export default function PublicGroup() {
             {g.members.map((m, i) => (
               <div key={i} className="member-tile">
                 <div className="member-photo">
-                  {m.image_url ? <img src={m.image_url} alt="" loading="lazy" /> : <div className="member-photo-fallback" />}
+                  <SmartImg src={m.image_url}
+                    fallback={<div className="member-photo-fallback"><span>{(m.name || "?").charAt(0)}</span></div>} />
                 </div>
                 <div className="member-name">{m.name}</div>
                 {m.bio && <div className="member-bio">{m.bio}</div>}
@@ -87,7 +88,7 @@ export default function PublicGroup() {
                 <div className="pv-cards">
                   {v.cards.map((c, i) => (
                     <div key={i} className="pv-card" style={{ borderColor: v.color }} title={`${c.member} · ${c.class}`}>
-                      <img src={c.art_url} alt="" loading="lazy" />
+                      <SmartImg src={c.art_url} fallback={<div className="pv-card-fallback" />} />
                     </div>
                   ))}
                 </div>
@@ -104,7 +105,7 @@ export default function PublicGroup() {
             {g.albums.map((a) => (
               <div key={a.name} className="album-tile">
                 <div className="album-cover">
-                  {a.image_url ? <img src={a.image_url} alt="" loading="lazy" /> : <div className="album-cover-fallback" />}
+                  <SmartImg src={a.image_url} fallback={<div className="album-cover-fallback" />} />
                 </div>
                 <div className="album-name">{a.name}</div>
                 <div className="album-meta">{fmt(a.streams)} streams</div>
@@ -120,7 +121,7 @@ export default function PublicGroup() {
           <div className="video-grid">
             {g.videos.map((v) => (
               <div key={v.id} className="video-tile">
-                <div className="video-thumb"><img src={v.thumbnail_url} alt="" loading="lazy" /></div>
+                <div className="video-thumb"><SmartImg src={v.thumbnail_url} fallback={<div className="album-cover-fallback" />} /></div>
                 <div className="video-title">{v.title}</div>
                 <div className="album-meta">{fmt(v.views)} views</div>
               </div>

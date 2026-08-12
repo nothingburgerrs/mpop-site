@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api.js";
+import SmartImg from "../components/SmartImg.jsx";
 
 // Public, kpopping-style directory: browse and search every group, not just the
 // ones you own. Read-only.
@@ -43,9 +44,10 @@ export default function Explore() {
           {filtered.map((g) => (
             <Link key={g.name} to={`/explore/${encodeURIComponent(g.name)}`} className="group-card">
               <div className="group-card-art">
-                {g.profile_picture
-                  ? <img src={g.profile_picture} alt="" loading="lazy" />
-                  : <div className="group-card-fallback" style={{ background: g.fandom_color || "var(--accent-dim)" }} />}
+                <SmartImg src={g.profile_picture} fallback={
+                  <div className="group-card-fallback" style={{ background: g.fandom_color || "var(--accent-dim)" }}>
+                    <span>{(g.name || "?").charAt(0)}</span>
+                  </div>} />
                 <span className={"tier-badge tier-" + (g.tier || "NUGU").toLowerCase()}>{g.tier}</span>
               </div>
               <div className="group-card-body">
