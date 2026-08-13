@@ -175,6 +175,15 @@ button.danger:hover:not(:disabled) { filter: brightness(1.08); }
 }
 .prism-q { color: #b9a8ff; font-weight: 800; font-size: 22px; }
 
+/* Company header */
+.company-head { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.company-logo { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; border: 1px solid var(--border); }
+.company-logo-fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent-dim), var(--bg));
+}
+.company-logo-fallback span { font-size: 30px; font-weight: 800; color: var(--accent); }
+
 /* ---- Explore (public directory) ---- */
 .explore-search {
   width: 100%; max-width: 420px; margin-bottom: 22px; padding: 10px 14px;

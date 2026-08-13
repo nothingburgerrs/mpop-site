@@ -15,6 +15,7 @@ const IMAGE_FIELDS = {
   album: new Set(["image_url", "era_image_url"]),
   member: new Set(["image_url", "card_url", "special_url"]),
   video: new Set(["thumbnail_url", "channel_logo"]),
+  company: new Set(["logo"]),
   // Prism version art: a card design (art_url) or a member's center special.
   prismcard: new Set(["art_url"]),
   prismspecial: new Set(["special_url"]),
@@ -73,6 +74,8 @@ export async function onRequestPost({ request, env }) {
     botPath = kind === "prismcard"
       ? `/api/groups/${enc(name)}/prisms/${enc(version)}/cards/${enc(member)}/${enc(slot)}`
       : `/api/groups/${enc(name)}/prisms/${enc(version)}/special/${enc(member)}`;
+  } else if (kind === "company") {
+    botPath = `/api/companies/${enc(name)}`;
   } else {
     botPath = `/api/${kind}s/${enc(name)}`;
   }

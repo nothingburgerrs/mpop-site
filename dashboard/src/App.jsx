@@ -54,7 +54,7 @@ export default function App() {
       <Layout user={auth.user}>
         <Routes>
           <Route path="/" element={<Overview />} />
-          <Route path="/companies/:name" element={<CompanyView />} />
+          <Route path="/companies/:name" element={<CompanyView notify={notify} />} />
           <Route path="/groups" element={<Groups />} />
           <Route path="/groups/:name" element={<GroupEdit notify={notify} />} />
           <Route path="/albums" element={<Albums />} />

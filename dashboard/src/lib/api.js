@@ -37,6 +37,17 @@ export const api = {
       method: "PATCH", body: JSON.stringify(changes),
     }),
 
+  // --- Companies ---
+  company: (name) => request(`/api/companies/${encodeURIComponent(name)}`),
+  saveCompany: (name, changes) =>
+    request(`/api/companies/${encodeURIComponent(name)}`, {
+      method: "PATCH", body: JSON.stringify(changes),
+    }),
+  deleteCompany: (name) =>
+    request(`/api/companies/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  uploadCompanyLogo: ({ name, blob }) =>
+    api.uploadImage({ kind: "company", name, field: "logo", blob }),
+
   // Reversible: mark a group inactive (or active again). Not a deletion.
   disbandGroup: (name, disbanded) =>
     request(`/api/groups/${encodeURIComponent(name)}/disband`, {
