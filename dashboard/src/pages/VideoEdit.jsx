@@ -24,7 +24,7 @@ export default function VideoEdit({ notify }) {
         setForm({
           title: v.title, channel: v.channel, type: v.type,
           views: v.views, likes: v.likes, dislikes: v.dislikes, date: v.date || "",
-          group: v.group || "", album: v.album || "",
+          group: v.group || "", album: v.album || "", song: v.song || "",
         });
       })
       .catch((e) => setError(e.message));
@@ -48,7 +48,7 @@ export default function VideoEdit({ notify }) {
       const updated = await api.saveVideo(video.id, {
         title: form.title, channel: form.channel, type: form.type,
         views: form.views, likes: form.likes, dislikes: form.dislikes, date: form.date,
-        group: form.group, album: form.album,
+        group: form.group, album: form.album, song: form.song,
       });
       setVideo(updated);
       setForm((f) => ({ ...f, ...updated }));
@@ -127,7 +127,12 @@ export default function VideoEdit({ notify }) {
         <input type="text" value={form.group} onChange={(e) => set("group", e.target.value)}
           placeholder="Group (e.g. ROM.COM)" style={{ marginBottom: 8 }} />
         <input type="text" value={form.album} onChange={(e) => set("album", e.target.value)}
-          placeholder="Album (e.g. Girl Of The Year)" />
+          placeholder="Album (e.g. Girl Of The Year)" style={{ marginBottom: 8 }} />
+        <input type="text" value={form.song} onChange={(e) => set("song", e.target.value)}
+          placeholder="Song (optional — e.g. Magic Wave for a 2nd MV)" />
+        <div className="hint" style={{ marginTop: 6 }}>
+          Set <strong>Song</strong> to tie this MV to one track, so <code>/views {form.album || "album"} song:{form.song || "song"}</code> shows this thumbnail.
+        </div>
       </div>
 
       <button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
